@@ -1,0 +1,135 @@
+2025-05-06 17:03:23,986 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:03:23,986 - root - INFO - Loading and preprocessing data
+2025-05-06 17:03:24,971 - root - INFO - Training XGBoost model
+2025-05-06 17:29:05,432 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:29:05,433 - root - INFO - Loading and preprocessing data
+2025-05-06 17:29:06,430 - root - INFO - Training XGBoost model
+2025-05-06 17:29:41,352 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:29:41,352 - root - INFO - Loading and preprocessing data
+2025-05-06 17:29:42,168 - root - INFO - Training XGBoost model
+
+2025-05-06 17:32:55,130 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:32:55,130 - root - INFO - Loading and preprocessing data
+2025-05-06 17:32:55,906 - root - INFO - Training XGBoost model
+2025-05-06 17:36:19,844 - root - INFO - Evaluating model
+2025-05-06 17:36:19,845 - root - ERROR - Pipeline failed: Feature shape mismatch, expected: 119, got 113
+Traceback (most recent call last):
+  File "e:\IDS_ML\main.py", line 43, in main
+    evaluation_results = evaluate_model(model, X_test, y_test)
+  File "e:\IDS_ML\src\train_model.py", line 70, in evaluate_model
+    y_pred = model.predict(X_test)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\sklearn.py", line 1718, in predict
+    class_probs = super().predict(
+        X=X,
+    ...<3 lines>...
+        iteration_range=iteration_range,
+    )
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\sklearn.py", line 1327, in predict
+    predts = self.get_booster().inplace_predict(
+        data=X,
+    ...<4 lines>...
+        validate_features=validate_features,
+    )
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 2677, in inplace_predict
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: Feature shape mismatch, expected: 119, got 113
+
+2025-05-06 17:41:46,845 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:41:46,845 - root - INFO - Loading and preprocessing data
+2025-05-06 17:41:47,582 - root - INFO - Training XGBoost model
+2025-05-06 17:46:19,861 - root - INFO - Evaluating model
+2025-05-06 17:46:19,862 - root - ERROR - Pipeline failed: evaluate_model() got an unexpected keyword argument 'optimize'
+Traceback (most recent call last):
+  File "e:\IDS_ML\main.py", line 43, in main
+    evaluation_results = evaluate_model(model, X_test, y_test,optimize=False)
+TypeError: evaluate_model() got an unexpected keyword argument 'optimize'
+2025-05-06 17:48:28,285 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:48:28,285 - root - INFO - Loading and preprocessing data
+2025-05-06 17:48:29,120 - root - INFO - Training XGBoost model
+2025-05-06 17:48:42,524 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 17:48:42,524 - root - INFO - Loading and preprocessing data
+2025-05-06 17:48:43,277 - root - INFO - Training XGBoost model
+
+
+2025-05-06 21:31:54,049 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 21:31:54,049 - root - INFO - Loading and preprocessing data
+2025-05-06 21:31:54,877 - root - INFO - Training XGBoost model
+2025-05-06 21:35:22,054 - root - INFO - Evaluating model
+2025-05-06 21:35:22,054 - root - ERROR - Pipeline failed: evaluate_model() got an unexpected keyword argument 'optimize'
+Traceback (most recent call last):
+  File "e:\IDS_ML\main.py", line 43, in main
+    evaluation_results = evaluate_model(model, X_test, y_test, optimize=True)
+TypeError: evaluate_model() got an unexpected keyword argument 'optimize'
+2025-05-06 21:41:29,800 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 21:41:29,800 - root - INFO - Loading and preprocessing data
+2025-05-06 21:41:30,538 - root - INFO - Training XGBoost model
+2025-05-06 21:44:44,308 - root - INFO - Evaluating model
+2025-05-06 21:44:44,309 - root - ERROR - Pipeline failed: Feature shape mismatch, expected: 119, got 113
+Traceback (most recent call last):
+  File "e:\IDS_ML\main.py", line 43, in main
+    evaluation_results = evaluate_model(model, X_test, y_test)
+  File "e:\IDS_ML\src\train_model.py", line 70, in evaluate_model
+    y_pred = model.predict(X_test)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\sklearn.py", line 1718, in predict
+    class_probs = super().predict(
+        X=X,
+    ...<3 lines>...
+        iteration_range=iteration_range,
+    )
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\sklearn.py", line 1327, in predict
+    predts = self.get_booster().inplace_predict(
+        data=X,
+    ...<4 lines>...
+        validate_features=validate_features,
+    )
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "e:\IDS_ML\venv\Lib\site-packages\xgboost\core.py", line 2677, in inplace_predict
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: Feature shape mismatch, expected: 119, got 113
+
+
+2025-05-06 21:58:49,706 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-06 21:58:49,706 - root - INFO - Loading and preprocessing data
+2025-05-06 21:58:50,401 - root - INFO - Training XGBoost model
+2025-05-06 22:02:12,666 - root - INFO - Evaluating model
+2025-05-07 18:16:46,022 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-07 18:16:46,023 - root - INFO - Loading and preprocessing data
+2025-05-07 18:16:47,185 - root - INFO - Training XGBoost model
+2025-05-07 18:20:40,175 - root - INFO - Evaluating model
+2025-05-07 18:21:26,740 - root - INFO - Explaining model with SHAP
+2025-05-07 18:21:27,182 - root - INFO - Saving model
+2025-05-07 18:21:27,188 - root - INFO - Pipeline completed successfully
+2025-05-08 18:24:53,279 - root - INFO - Starting training + evaluation pipeline
+2025-05-08 21:17:04,134 - root - INFO - Starting training + evaluation pipeline
+2025-05-08 21:17:04,134 - root - INFO - Loading and preprocessing data
+2025-05-08 21:17:04,815 - root - INFO - Training XGBoost model
+2025-05-08 21:20:14,777 - root - INFO - Evaluating model
+2025-05-08 22:18:22,682 - root - INFO - Starting training + evaluation pipeline
+2025-05-08 22:18:22,683 - root - INFO - Loading and preprocessing data
+2025-05-08 22:18:23,407 - root - INFO - Training XGBoost model
+2025-05-08 22:21:49,169 - root - INFO - Evaluating model
+2025-05-08 22:39:09,604 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-08 22:39:09,605 - root - INFO - Loading and preprocessing data
+2025-05-08 22:39:10,290 - root - INFO - Training XGBoost model
+2025-05-08 22:42:29,823 - root - INFO - Evaluating model
+2025-05-08 22:49:55,125 - root - INFO - Explaining model with SHAP
+2025-05-08 22:49:55,577 - root - INFO - Saving model
+2025-05-08 22:49:55,583 - root - INFO - Pipeline completed successfully
+2025-05-08 23:11:41,335 - root - INFO - Starting NSL-KDD IDS ML Pipeline
+2025-05-08 23:11:41,336 - root - INFO - Loading and preprocessing data
+2025-05-08 23:11:42,051 - root - INFO - Training XGBoost model
