@@ -1,75 +1,63 @@
 import logging
 import os
- 
-from src.preprocess import load_data, clean_data, preprocess_features
-from src.train_model import train_model, evaluate_model, save_model, save_preprocessor
-from src.explain_model import explain_model
-from src import stream_monitor  # đảm bảo bạn đã có file stream_monitor.py
+import sys # Import sys để xử lý tham số dòng lệnh
+
+# Import các hàm chính từ các module đã sửa đổi
+# Chúng ta sẽ không cần import từng hàm con như clean_data, save_model...
+# vì chúng đã được tích hợp bên trong các pipeline
+from src.train_model import train_model as run_train_pipeline # Đổi tên để tránh trùng lặp
+from src.stream_monitor import monitor as run_monitor_pipeline # Đổi tên để tránh trùng lặp
 
 def setup_logging():
+    """Cấu hình hệ thống logging."""
+    # Đảm bảo thư mục logs tồn tại
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(os.path.join('logs', 'app.log')),
+            logging.FileHandler(os.path.join(log_dir, 'app.log')),
             logging.StreamHandler()
         ]
     )
 
-def train_pipeline():
-    logging.info("Starting training + evaluation pipeline")
-
-    train_file = "dataset/NSL-KDD-Dataset/KDDTrain+.txt"
-    test_file = "dataset/NSL-KDD-Dataset/KDDTest+.txt"
-
-    # Train set
-    logging.info("Loading and preprocessing data")
-    train_df = load_data(train_file)
-    train_df = clean_data(train_df)
-    X_train, y_train, preprocessor = preprocess_features(train_df, fit=True)
-
-    # Test set
-    test_df = load_data(test_file)
-    test_df = clean_data(test_df)
-    X_test, y_test, _ = preprocess_features(test_df, preprocessor=preprocessor, fit=False)
-
-    # Train
-    logging.info("Training XGBoost model")
-    model = train_model(X_train, y_train, model_type='xgb', optimize=True)
-
-    # Evaluate
-    logging.info("Evaluating model")
-    evaluate_model(model, X_test, y_test)
-
-    # Explain
-    logging.info("Explaining model with SHAP")
-    explain_model(model, X_test[:100], save_plot=True)
-
-    # Save model & preprocessor
-    logging.info("Saving model and preprocessor")
-    save_model(model, path="models/xgb_model.pkl")
-    save_preprocessor(preprocessor, path="models/preprocessor.pkl")
-
-    assert os.path.exists("models/xgb_model.pkl"), "Model file not saved!"
-    assert os.path.exists("models/preprocessor.pkl"), "Preprocessor file not saved!"
-
-    logging.info("Training pipeline completed successfully")
+# Hàm train_pipeline cũ đã bị loại bỏ vì toàn bộ logic đã được gói gọn trong src.train_model.py
 
 def main():
+    """Điểm vào chính của ứng dụng."""
     setup_logging()
-    logging.info("Chọn chế độ:")
-    print("1. Huấn luyện mô hình (train)")
-    print("2. Giám sát thời gian thực (real-time monitor)")
+    logging.info("Ứng dụng IDS dựa trên Machine Learning đã khởi động.")
 
-    choice = input("Nhập lựa chọn (1 hoặc 2): ").strip()
-
-    if choice == '1':
-        train_pipeline()
-    elif choice == '2':
-        logging.info("Bắt đầu giám sát thời gian thực")
-        stream_monitor.monitor()
+    # Sử dụng tham số dòng lệnh để chọn chế độ
+    # Ví dụ: python main.py train hoặc python main.py monitor
+    if len(sys.argv) > 1:
+        mode = sys.argv[1].lower()
     else:
-        logging.error("Lựa chọn không hợp lệ. Vui lòng chọn 1 hoặc 2.")
+        # Nếu không có tham số dòng lệnh, yêu cầu người dùng nhập
+        logging.info("Chọn chế độ hoạt động:")
+        print("1. Huấn luyện mô hình (train)")
+        print("2. Giám sát thời gian thực (monitor)")
+        choice = input("Nhập lựa chọn (1 hoặc 2 hoặc tên chế độ): ").strip().lower()
+        if choice == '1' or choice == 'train':
+            mode = 'train'
+        elif choice == '2' or choice == 'monitor':
+            mode = 'monitor'
+        else:
+            logging.error("Lựa chọn không hợp lệ. Vui lòng chọn 'train' hoặc 'monitor'.")
+            sys.exit(1) # Thoát với mã lỗi
+
+    if mode == 'train':
+        logging.info("[*] Chế độ: Huấn luyện mô hình.")
+        run_train_pipeline() # Gọi hàm train_model từ src/train_model.py
+    elif mode == 'monitor':
+        logging.info("[*] Chế độ: Giám sát thời gian thực.")
+        run_monitor_pipeline() # Gọi hàm monitor từ src/stream_monitor.py
+    else:
+        logging.error(f"Chế độ '{mode}' không được hỗ trợ. Vui lòng chọn 'train' hoặc 'monitor'.")
+        sys.exit(1) # Thoát với mã lỗi
 
 if __name__ == "__main__":
     main()
@@ -78,68 +66,3 @@ if __name__ == "__main__":
 
 
 
-
-# Bản này là chỉ dùng để train, chứ không có monitor
-
-# from src.preprocess import load_data, clean_data, preprocess_features
-# from src.train_model import train_model, evaluate_model, save_model ,save_preprocessor
-# from src.explain_model import explain_model
-# import logging
-# import os
- 
-# def setup_logging():
-#     logging.basicConfig(
-#         level=logging.INFO,
-#         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#         handlers=[
-#             logging.FileHandler(os.path.join('logs', 'app.log')),
-#             logging.StreamHandler()
-#         ]
-#     )
-
-# def main():
-#     setup_logging()
-#     logging.info("Starting NSL-KDD IDS ML Pipeline")
-    
-#     try:
-#         # 1. Load và tiền xử lý dữ liệu
-#         logging.info("Loading and preprocessing data")
-#         train_file = "dataset/NSL-KDD-Dataset/KDDTrain+.txt"
-#         test_file = "dataset/NSL-KDD-Dataset/KDDTest+.txt"
-          
-#         # Xử lý tập train
-#         train_df = load_data(train_file)
-#         train_df = clean_data(train_df)
-#         X_train, y_train, preprocessor = preprocess_features(train_df, fit=True)
-
-#         # Xử lý tập test với preprocessor đã fit từ train
-#         test_df = load_data(test_file)
-#         test_df = clean_data(test_df)
-#         X_test, y_test, _ = preprocess_features(test_df, preprocessor=preprocessor, fit=False)
-
-        
-#         # 2. Huấn luyện mô hình
-#         logging.info("Training XGBoost model")
-#         model = train_model(X_train, y_train, model_type='xgb', optimize=True)
-        
-#         # 3. Đánh giá mô hình
-#         logging.info("Evaluating model")
-#         evaluation_results = evaluate_model(model, X_test, y_test)
-        
-#         # 4. Giải thích mô hình
-#         logging.info("Explaining model with SHAP")
-#         explain_results = explain_model(model, X_test[:100], save_plot=True)
-        
-#         # 5. Lưu mô hình
-#         logging.info("Saving model")
-#         save_model(model)
-#         save_preprocessor(preprocessor)
-        
-#         logging.info("Pipeline completed successfully")
-        
-#     except Exception as e:
-#         logging.error(f"Pipeline failed: {str(e)}", exc_info=True)
-#         raise
-
-# if __name__ == "__main__":
-#     main()
