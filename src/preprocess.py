@@ -1,90 +1,122 @@
-# import pandas as pd
-# import numpy as np
-# from sklearn.preprocessing import StandardScaler, OneHotEncoder
-# from sklearn.compose import ColumnTransformer
-# from sklearn.model_selection import train_test_split
-# from src.config import DROP_COLUMNS, DATA_PATH
- 
-# def load_data(filepath):
-#     """Tải dữ liệu NSL-KDD với cấu trúc chuẩn"""
-#     columns = [
-#         'duration', 'protocol_type', 'service', 'flag', 'src_bytes', 'dst_bytes',
-#         'land', 'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 'logged_in',
-#         'num_compromised', 'root_shell', 'su_attempted', 'num_root', 'num_file_creations',
-#         'num_shells', 'num_access_files', 'num_outbound_cmds', 'is_host_login',
-#         'is_guest_login', 'count', 'srv_count', 'serror_rate', 'srv_serror_rate',
-#         'rerror_rate', 'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate',
-#         'srv_diff_host_rate', 'dst_host_count', 'dst_host_srv_count',
-#         'dst_host_same_srv_rate', 'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
-#         'dst_host_srv_diff_host_rate', 'dst_host_serror_rate', 'dst_host_srv_serror_rate',
-#         'dst_host_rerror_rate', 'dst_host_srv_rerror_rate', 'outcome', 'difficulty'
-#     ]
-    
-#     df = pd.read_csv(filepath, names=columns, header=None)
-#     return df
-
-# def clean_data(df):
-#     """Làm sạch dữ liệu NSL-KDD"""
-#     # Xử lý missing values và duplicate
-#     df.replace(['?', 'inf'], np.nan, inplace=True)
-#     df.dropna(inplace=True)
-#     df.drop_duplicates(inplace=True)
-    
-#     # Xóa cột không cần thiết
-#     df.drop(['difficulty'] + DROP_COLUMNS, axis=1, errors='ignore', inplace=True)
-    
-#     # Chuẩn hóa nhãn
-#     attack_types = {
-#         'normal': 'normal',
-#         'back': 'DoS', 'land': 'DoS', 'neptune': 'DoS', 'pod': 'DoS', 
-#         'smurf': 'DoS', 'teardrop': 'DoS', 'mailbomb': 'DoS', 'apache2': 'DoS',
-#         'processtable': 'DoS', 'udpstorm': 'DoS',
-#         'ipsweep': 'Probe', 'nmap': 'Probe', 'portsweep': 'Probe', 
-#         'satan': 'Probe', 'mscan': 'Probe', 'saint': 'Probe',
-#         'buffer_overflow': 'U2R', 'loadmodule': 'U2R', 'perl': 'U2R', 
-#         'rootkit': 'U2R', 'sqlattack': 'U2R', 'xterm': 'U2R',
-#         'ftp_write': 'R2L', 'guess_passwd': 'R2L', 'imap': 'R2L', 
-#         'multihop': 'R2L', 'phf': 'R2L', 'spy': 'R2L', 'warezclient': 'R2L',
-#         'warezmaster': 'R2L', 'xlock': 'R2L', 'xsnoop': 'R2L', 'snmpguess': 'R2L'
-#     }
-    
-#     df['attack_category'] = df['outcome'].map(attack_types)
-#     df['binary_label'] = df['outcome'].apply(lambda x: 0 if x == 'normal' else 1)
-    
-#     return df
-
-# def preprocess_features(df, preprocessor=None, fit=False):
-#     """Tiền xử lý đặc trưng cho NSL-KDD"""
-#     # Xác định các cột đặc trưng
-#     numeric_features = df.select_dtypes(include=['int64', 'float64']).columns.drop(['binary_label'], errors='ignore')
-#     categorical_features = df.select_dtypes(include=['object']).columns.drop(['outcome', 'attack_category'], errors='ignore')
-
-#     if preprocessor is None:
-#         preprocessor = ColumnTransformer(
-#             transformers=[
-#                 ('num', StandardScaler(), numeric_features),
-#                 ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
-#             ])
-
-#     if fit:
-#         X = preprocessor.fit_transform(df)
-#     else:
-#         X = preprocessor.transform(df)
-    
-#     y = df['binary_label']
-#     return X, y, preprocessor
-
-
+# src/preprocess.py
 
 import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
-from src.config import DROP_COLUMNS, DATA_PATH
+from sklearn.pipeline import Pipeline
+import joblib
+import logging
+from src.config import NSL_KDD_RELEVANT_COLUMNS, SERVICE_MAPPING, ZEEK_CONN_STATE_TO_NSL_FLAG
 
-def load_data(filepath):
-    """Tải dữ liệu NSL-KDD với cấu trúc chuẩn"""
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+def map_port_to_service(protocol, port):
+    """Ánh xạ cổng và giao thức sang dịch vụ NSL-KDD."""
+    if protocol == 'tcp' and port in SERVICE_MAPPING:
+        return SERVICE_MAPPING[port]
+    if protocol == 'udp' and port in SERVICE_MAPPING:
+        return SERVICE_MAPPING[port]
+    return 'other'
+
+def preprocess_features(df, preprocessor=None, fit=True):
+    """
+    Tiền xử lý các đặc trưng của bộ dữ liệu NSL-KDD.
+    :param df: DataFrame chứa dữ liệu thô.
+    :param preprocessor: Bộ tiền xử lý đã được huấn luyện (dùng cho chế độ monitor).
+    :param fit: True nếu huấn luyện bộ tiền xử lý, False nếu chỉ transform.
+    :return: X_processed (features), y (labels), preprocessor (bộ tiền xử lý đã huấn luyện).
+    """
+    #logging.info(f"Kích thước DataFrame đầu vào: {df.shape}")
+
+    # Bước 1: Đảm bảo DataFrame chỉ chứa các cột quan trọng và điền giá trị mặc định
+    # Điều này cực kỳ quan trọng để đảm bảo đồng bộ giữa training và real-time
+    processed_df = pd.DataFrame(columns=NSL_KDD_RELEVANT_COLUMNS)
+    for col in NSL_KDD_RELEVANT_COLUMNS:
+        if col in df.columns:
+            processed_df[col] = df[col]
+        else:
+            # Điền giá trị mặc định cho các cột không có trong Zeek conn.log
+            if col in ['protocol_type', 'service', 'flag', 'outcome']:
+                processed_df[col] = 'unknown'
+            elif col in ['land', 'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 
+                          'logged_in', 'num_compromised', 'root_shell', 'su_attempted', 
+                          'num_root', 'num_file_creations', 'num_shells', 'num_access_files', 
+                          'num_outbound_cmds', 'is_host_login', 'is_guest_login']:
+                processed_df[col] = 0
+            else: # Các cột số khác
+                processed_df[col] = 0.0
+    
+    # Ép kiểu dữ liệu để tránh lỗi sau này (đặc biệt sau khi điền 0/unknown)
+    for col in ['duration', 'src_bytes', 'dst_bytes', 'count', 'srv_count',
+                'serror_rate', 'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate',
+                'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate',
+                'dst_host_count', 'dst_host_srv_count', 'dst_host_same_srv_rate',
+                'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
+                'dst_host_srv_diff_host_rate', 'dst_host_serror_rate',
+                'dst_host_srv_serror_rate', 'dst_host_rerror_rate',
+                'dst_host_srv_rerror_rate']:
+        if col in processed_df.columns:
+            processed_df[col] = pd.to_numeric(processed_df[col], errors='coerce').fillna(0.0)
+    
+    for col in ['land', 'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 
+                'logged_in', 'num_compromised', 'root_shell', 'su_attempted', 
+                'num_root', 'num_file_creations', 'num_shells', 'num_access_files', 
+                'num_outbound_cmds', 'is_host_login', 'is_guest_login']:
+        if col in processed_df.columns:
+            processed_df[col] = pd.to_numeric(processed_df[col], errors='coerce').fillna(0).astype(int)
+
+
+    # Loại bỏ các cột không cần thiết cho huấn luyện (ví dụ: 'outcome')
+    if 'outcome' in processed_df.columns:
+        X = processed_df.drop('outcome', axis=1)
+        y = processed_df['outcome']
+    else:
+        # Trong chế độ monitor, 'outcome' có thể không có
+        X = processed_df
+        y = None # Hoặc một giá trị placeholder
+
+    # Xác định các cột phân loại và số
+    categorical_cols = X.select_dtypes(include=['object']).columns
+    numerical_cols = X.select_dtypes(include=['number']).columns
+
+    # logging.info(f"Cột phân loại: {list(categorical_cols)}")
+    # logging.info(f"Cột số: {list(numerical_cols)}")
+
+    # Tạo pipeline tiền xử lý
+    if preprocessor is None: # Chế độ huấn luyện
+        numerical_transformer = StandardScaler()
+        categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', numerical_transformer, numerical_cols),
+                ('cat', categorical_transformer, categorical_cols)
+            ],
+            remainder='passthrough' # Giữ nguyên các cột không được biến đổi (nếu có)
+        )
+        if fit:
+            logging.info("Huấn luyện bộ tiền xử lý...")
+            X_processed = preprocessor.fit_transform(X)
+            joblib.dump(preprocessor, 'models/preprocessor.pkl') # Lưu bộ tiền xử lý
+            logging.info("Đã lưu preprocessor.pkl")
+        else:
+            # logging.info("Sử dụng bộ tiền xử lý đã có...")
+            X_processed = preprocessor.transform(X)
+    else: # Chế độ transform (monitor)
+        # logging.info("Sử dụng bộ tiền xử lý đã có để transform...")
+        X_processed = preprocessor.transform(X)
+    
+    # logging.info(f"Kích thước dữ liệu sau tiền xử lý: {X_processed.shape}")
+    return X_processed, y, preprocessor
+
+# Hàm để đọc dữ liệu thô từ file NSL-KDD
+def load_nslkdd_data(filepath="dataset/NSL-KDD-Dataset/KDDTrain+.txt"):
+    """
+    Tải dữ liệu NSL-KDD từ file text.
+    :param filepath: Đường dẫn đến file KDDTrain+.txt hoặc KDDTest+.txt.
+    :return: DataFrame của dữ liệu.
+    """
+    # Các tên cột của NSL-KDD
     columns = [
         'duration', 'protocol_type', 'service', 'flag', 'src_bytes', 'dst_bytes',
         'land', 'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 'logged_in',
@@ -98,74 +130,19 @@ def load_data(filepath):
         'dst_host_rerror_rate', 'dst_host_srv_rerror_rate', 'outcome', 'difficulty'
     ]
     
-    df = pd.read_csv(filepath, names=columns, header=None)
-    return df
-
-def clean_data(df):
-    """Làm sạch và chuẩn hóa dữ liệu NSL-KDD"""
-    df.replace(['?', 'inf'], np.nan, inplace=True)
-    df.dropna(inplace=True)
-    df.drop_duplicates(inplace=True)
-
-    df.drop(['difficulty'] + DROP_COLUMNS, axis=1, errors='ignore', inplace=True)
-
-    # Mapping các loại tấn công thành nhóm
-    attack_types = {
-        'normal': 'normal',
-        'back': 'DoS', 'land': 'DoS', 'neptune': 'DoS', 'pod': 'DoS', 
-        'smurf': 'DoS', 'teardrop': 'DoS', 'mailbomb': 'DoS', 'apache2': 'DoS',
-        'processtable': 'DoS', 'udpstorm': 'DoS',
-        'ipsweep': 'Probe', 'nmap': 'Probe', 'portsweep': 'Probe', 
-        'satan': 'Probe', 'mscan': 'Probe', 'saint': 'Probe',
-        'buffer_overflow': 'U2R', 'loadmodule': 'U2R', 'perl': 'U2R', 
-        'rootkit': 'U2R', 'sqlattack': 'U2R', 'xterm': 'U2R',
-        'ftp_write': 'R2L', 'guess_passwd': 'R2L', 'imap': 'R2L', 
-        'multihop': 'R2L', 'phf': 'R2L', 'spy': 'R2L', 'warezclient': 'R2L',
-        'warezmaster': 'R2L', 'xlock': 'R2L', 'xsnoop': 'R2L', 'snmpguess': 'R2L'
-    }
-
-    df['attack_category'] = df['outcome'].map(attack_types)
-    df['binary_label'] = df['outcome'].apply(lambda x: 0 if x == 'normal' else 1)
-
-    return df
-
-def preprocess_features(df, preprocessor=None, fit=False):
-    """
-    Tiền xử lý đặc trưng – dùng được cho cả dữ liệu training và dữ liệu thời gian thực.
+    logging.info(f"Đang tải dữ liệu từ: {filepath}")
+    df = pd.read_csv(filepath, header=None, names=columns)
     
-    Args:
-        df: DataFrame cần xử lý
-        preprocessor: pipeline đã khởi tạo hoặc None
-        fit: nếu True thì fit + transform, ngược lại chỉ transform
+    # Xử lý cột 'outcome'
+    # 'normal' là 0, còn lại là 1 (tấn công)
+    df['outcome'] = df['outcome'].apply(lambda x: 0 if x == 'normal' else 1)
+    
+    # Loại bỏ cột 'difficulty' vì nó không phải là đặc trưng
+    df = df.drop('difficulty', axis=1)
 
-    Returns:
-        X: đặc trưng đã xử lý
-        y: nhãn (nếu có)
-        preprocessor: pipeline đã khởi tạo
-    """
-    df_copy = df.copy()
+    logging.info(f"Đã tải dữ liệu với kích thước: {df.shape}")
+    return df
 
-    # Xác định các cột
-    numeric_features = df_copy.select_dtypes(include=['int64', 'float64']).columns.drop(
-        ['binary_label'], errors='ignore'
-    )
-    categorical_features = df_copy.select_dtypes(include=['object']).columns.drop(
-        ['outcome', 'attack_category'], errors='ignore'
-    )
 
-    # Tạo pipeline nếu chưa có
-    if preprocessor is None:
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('num', StandardScaler(), numeric_features),
-                ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
-            ]
-        )
 
-    if fit:
-        X = preprocessor.fit_transform(df_copy)
-    else:
-        X = preprocessor.transform(df_copy)
 
-    y = df_copy['binary_label'] if 'binary_label' in df_copy.columns else None
-    return X, y, preprocessor

@@ -1,118 +1,79 @@
+# src/train_model.py
+
+import pandas as pd
 import joblib
-import xgboost as xgb
 import logging
-from sklearn.metrics import (
-    classification_report, confusion_matrix, 
-    roc_auc_score, accuracy_score, precision_recall_curve
-)
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from sklearn.ensemble import RandomForestClassifier
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from src.preprocess import load_nslkdd_data, preprocess_features # Import các hàm từ preprocess
 from src.config import MODEL_PATHS
-import matplotlib.pyplot as plt
-from src.config import PREPROCESSOR_PATH
 
-def train_model(X_train, y_train, model_type='xgb', optimize=False):
-    """
-    Huấn luyện mô hình với lựa chọn thuật toán
-    Args:
-        model_type: 'xgb' (XGBoost) hoặc 'rf' (Random Forest)
-        optimize: Nếu True sẽ thực hiện tối ưu siêu tham số
-    """
-    if model_type == 'xgb':
-        model = xgb.XGBClassifier(
-            # use_label_encoder=False,
-            eval_metric='logloss',
-            n_estimators=150,
-            max_depth=7,
-            learning_rate=0.1,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            random_state=42,
-            tree_method ='hist'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        )
-        param_grid = {
-            'max_depth': [5, 7, 9],
-            'learning_rate': [0.01, 0.1, 0.2],
-            'n_estimators': [100, 150, 200],
-            'gamma': [0, 0.1, 0.2]
-        }
-    else:
-        model = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=15,
-            random_state=42
-        )
-        param_grid = {
-            'n_estimators': [100, 200, 300],
-            'max_depth': [10, 15, 20],
-            'min_samples_split': [2, 5, 10]
-        }
-    
-    if optimize:
-        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
-        grid = GridSearchCV(
-            model, 
-            param_grid, 
-            cv=cv, 
-            scoring='roc_auc',
-            n_jobs=-1,
-            verbose=1
-        )
-        grid.fit(X_train, y_train)
-        model = grid.best_estimator_
-        print(f"Best parameters: {grid.best_params_}")
-    else:
-        model.fit(X_train, y_train)
-    
-    return model
+def train_model():
+    logging.info("[*] Bắt đầu quá trình huấn luyện mô hình.")
 
-def evaluate_model(model, X_test, y_test):
-    """Đánh giá mô hình toàn diện"""
-    y_pred = model.predict(X_test)
-    y_proba = model.predict_proba(X_test)[:, 1]
+    # 1. Tải dữ liệu NSL-KDD
+    try:
+        df_train = load_nslkdd_data("dataset/NSL-KDD-Dataset/KDDTrain+.txt")
+        df_test = load_nslkdd_data("dataset/NSL-KDD-Dataset/KDDTest+.txt")
+    except FileNotFoundError as e:
+        logging.error(f"Không tìm thấy file dữ liệu NSL-KDD: {e}. Vui lòng kiểm tra đường dẫn.")
+        return
+    except Exception as e:
+        logging.error(f"Lỗi khi tải dữ liệu: {e}", exc_info=True)
+        return
+
+    # 2. Tiền xử lý dữ liệu huấn luyện
+    # preprocessor sẽ được huấn luyện trên df_train và lưu lại
+    X_train_processed, y_train, preprocessor = preprocess_features(df_train, fit=True)
     
-    # Classification metrics
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
+    # 3. Tiền xử lý dữ liệu kiểm thử
+    # Sử dụng preprocessor đã huấn luyện để transform df_test
+    X_test_processed, y_test, _ = preprocess_features(df_test, preprocessor=preprocessor, fit=False)
+
+    # 4. Huấn luyện mô hình XGBoost
+    logging.info("Huấn luyện mô hình XGBoost...")
+    model = xgb.XGBClassifier(
+        objective='binary:logistic',
+        eval_metric='logloss',
+        use_label_encoder=False,
+        n_estimators=100, # Số lượng cây
+        learning_rate=0.1,
+        max_depth=5,
+        random_state=42
+    )
+    model.fit(X_train_processed, y_train)
     
-    # Confusion matrix
-    cm = confusion_matrix(y_test, y_pred)
-    print("\nConfusion Matrix:")
-    print(cm)
-    
-    # ROC AUC
+    # 5. Đánh giá mô hình
+    logging.info("Đánh giá mô hình trên tập kiểm thử...")
+    y_pred = model.predict(X_test_processed)
+    y_proba = model.predict_proba(X_test_processed)[:, 1]
+
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_proba)
-    print("\nROC AUC Score:", roc_auc)
-    
-    # Precision-Recall curve
-    precision, recall, _ = precision_recall_curve(y_test, y_proba)
-    plt.figure()
-    plt.plot(recall, precision, marker='.')
-    plt.title('Precision-Recall Curve')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.show()
-    
-    return {
-        'classification_report': classification_report(y_test, y_pred, output_dict=True),
-        'confusion_matrix': cm.tolist(),
-        'roc_auc': roc_auc,
-        'precision_recall_curve': {'precision': precision, 'recall': recall}
-    }
 
-def save_model(model, path="models/xgb_model.pkl"):
-    joblib.dump(model, path)
-    logging.info(f"Model saved to {path}")
+    logging.info(f"Độ chính xác (Accuracy): {accuracy:.4f}")
+    logging.info(f"Độ chính xác (Precision): {precision:.4f}")
+    logging.info(f"Độ thu hồi (Recall): {recall:.4f}")
+    logging.info(f"Điểm F1 (F1-Score): {f1:.4f}")
+    logging.info(f"ROC AUC: {roc_auc:.4f}")
 
-def save_preprocessor(preprocessor, path="models/preprocessor.pkl"):
-    joblib.dump(preprocessor, path)
-    logging.info(f"Preprocessor saved to {path}")
+    # 6. Lưu mô hình
+    try:
+        joblib.dump(model, MODEL_PATHS['xgb'])
+        logging.info(f"Đã lưu mô hình XGBoost tại: {MODEL_PATHS['xgb']}")
+    except Exception as e:
+        logging.error(f"Lỗi khi lưu mô hình: {e}", exc_info=True)
+
+    logging.info("[*] Hoàn tất quá trình huấn luyện mô hình.")
+
+if __name__ == "__main__":
+    train_model()
 
 
-# Back-up cho phần save model nếu bị lỗi 
-# def save_model(model, filename=MODEL_PATHS['xgb']):
-#     joblib.dump(model, filename)
 
-# def save_preprocessor(preprocessor, filename=PREPROCESSOR_PATH):
-#     joblib.dump(preprocessor, filename) 
