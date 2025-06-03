@@ -10,7 +10,7 @@ Dự án xây dựng một hệ thống phát hiện xâm nhập mạng (IDS) ho
 
 1. **Thu thập dữ liệu:**
    - Dữ liệu huấn luyện: file `KDDTrain` (từ bộ dữ liệu NSL-KDD).
-   - Dữ liệu giám sát thời gian thực: bắt trực tiếp từ card mạng bằng `pyshark`.
+   - Dữ liệu giám sát thời gian thực: bắt trực tiếp từ card mạng bằng `Zeek`.
 
 2. **Tiền xử lý:**
    - Loại bỏ cột dư thừa, mã hóa nhãn, chuẩn hóa đặc trưng.
@@ -21,8 +21,10 @@ Dự án xây dựng một hệ thống phát hiện xâm nhập mạng (IDS) ho
    - Lưu mô hình bằng `joblib` vào thư mục `models/`
 
 4. **Giám sát thời gian thực:**
-   - Bắt gói bằng `pyshark`, trích xuất đặc trưng.
+   - Bắt gói bằng `Zeek`, trích xuất đặc trưng, tính toán các đặc trưng còn thiếu  .
    - Áp dụng mô hình học máy đã huấn luyện để phân loại.
+   - Dùng ELK Stack để lưu trữ , trực quan dữ liệu .
+     
 
 ---
 
@@ -34,21 +36,19 @@ Dự án xây dựng một hệ thống phát hiện xâm nhập mạng (IDS) ho
 - **Tiền xử lý dữ liệu:**
   - `pandas`, `scikit-learn`
 - **Giám sát mạng:**
-  - `pyshark` để đọc gói tin mạng
+  - `Zeek` để đọc gói tin mạng
 - **Lập trình Python:**
   - Tổ chức mã theo module
   - Giao tiếp giữa các file mã nguồn
 
----
-
-## 🚀 Giám sát thời gian thực
-
-- Chương trình sử dụng `pyshark.LiveCapture` để bắt gói tin thời gian thực từ card mạng.
-- Với mỗi gói tin, hệ thống trích xuất đặc trưng phù hợp với dữ liệu huấn luyện.
-- Mô hình XGBoost được tải từ file `.pkl` để phân loại gói tin: **Bình thường / Tấn công**
-- Kết quả được hiển thị trực tiếp trên terminal.
+- **Hệ thống SIEM:**
+   - Elasticsearch : lưu trữ log , dữ liệu
+   - Kibana: trực quan hóa dữ liệu
+   - Filebeat : chuẩn hóa logs Zeek   
 
 ---
+
+
 
 ## 📂 Cấu trúc thư mục
 ```
@@ -66,6 +66,7 @@ IDS-using-Machine-Learning/
 │   ├── config.py           # Cấu hình
 │   ├── preprocess.py       # Tiền xử lý dữ liệu
 │   ├── train_model.py      # Training
+│   ├── zeek_feature_extractor.py #Chuẩn hóa đặc trưng từ Zeek 
 │   ├── explain_model.py    # Giải thích model (SHAP)
 │   └── stream_monitor.py   # Giám sát real-time
 │
