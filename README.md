@@ -5,13 +5,16 @@
 
 ## 📌 Overview
 
-This project implements an **Intrusion Detection System (IDS)** leveraging **Machine Learning (ML)** to detect network intrusions. It utilizes the **NSL-KDD** dataset for training/testing models, and integrates the following components:
+This project implements an **Intrusion Detection System (IDS)** leveraging **Machine Learning (ML)** to detect
+network intrusions. It utilizes the **NSL-KDD** dataset for training/testing models, and integrates the following
+components:
 
 - **Zeek** for network traffic analysis
 - **Filebeat** for log collection
 - **ELK Stack** (Elasticsearch, Logstash, Kibana) for log storage & visualization
 
-The system classifies network traffic as benign or malicious (e.g., port scanning, DoS attacks), and sends alerts to Elasticsearch for real-time visualization on **Kibana dashboards**.
+The system classifies network traffic as benign or malicious (e.g., port scanning, DoS attacks), and sends alerts
+to Elasticsearch for real-time visualization on **Kibana dashboards**.
 
 ### 🧪 Tested Environment
 
@@ -132,6 +135,7 @@ IDS-using-MachineLearning/
 ├── requirements.txt        # Python dependencies
 ├── main.py                 # Main execution script
 └── README.md               # Project documentation
+└── License.txt             # License
 ```
 
 ---
@@ -256,11 +260,9 @@ This project is licensed under the **MIT License**. See the `LICENSE` file for m
 
 ## 📬 Contact
 
-For issues or suggestions, open an issue on GitHub or email: **\[[your-email@example.com](mailto:your-email@example.com)]**
+For issues or suggestions, open an issue on GitHub or email: **\[[retwon2k4@gmail.com](mailto:retwon2k4@gmail.com)]**
 
 ```
 
 ---
 
-Bạn có thể copy đoạn trên và dán vào `README.md`. Nếu bạn muốn mình viết thêm phần nào như ảnh minh họa, biểu đồ đánh giá mô hình, hay hướng dẫn từng bước chạy script, mình cũng có thể giúp bạn bổ sung.
-```
