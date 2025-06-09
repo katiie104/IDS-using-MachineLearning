@@ -71,9 +71,12 @@ pip install -r requirements.txt
 * pandas
 * numpy
 * scikit-learn
+* xgboost
+* shap
 * matplotlib
 * seaborn
-* tensorflow
+* joblib
+* pyshark 
 
 ### 3. Install Zeek
 
@@ -97,7 +100,6 @@ Edit `/etc/filebeat/filebeat.yml` to collect Zeek logs (e.g., `conn.log`) and fo
 docker-compose -f elk/docker-compose-elk.yml up -d
 ```
 
-> You can modify or use the provided `docker-compose-elk.yml` file.
 
 ### 6. Download NSL-KDD Dataset
 
