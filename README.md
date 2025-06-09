@@ -110,31 +110,28 @@ Download the following files and place them in the `data/` directory:
 ## 📁 Project Structure
 
 ```
-IDS-using-Machine-Learning/
-│
-├── dataset/                # Thư mục chứa dữ liệu training 
-│   ├── NSL-KDD/                        
-│
-├── models/                 # Các model đã train
-│   ├── preprocessor.pkl    # Tiền xử lý
-│   └── xgb_model.pkl       # Model XGBoost
-│
-├── src/                    # Mã nguồn chính
-│   ├── __init__.py         # Khởi tạo package
-│   ├── config.py           # Cấu hình
-│   ├── preprocess.py       # Tiền xử lý dữ liệu
-│   ├── train_model.py      # Training
-│   ├── zeek_feature_extractor.py #Chuẩn hóa đặc trưng từ Zeek 
-│   ├── explain_model.py    # Giải thích model (SHAP)
-│   └── stream_monitor.py   # Giám sát real-time
-│
-├── logs/                   # File log (nên ignore)
-│   └── app.log             # Log ứng dụng
-│
-├── venv/                  # Virtual Environment  
-├── requirements.txt       # Thư viện cần thiết
-├── main.py                # File chạy chính
-└── README.md              # Mô tả dự án
+IDS-using-MachineLearning/
+├── dataset/                # Training data
+│   ├── NSL-KDD/            # NSL-KDD dataset
+│       ├── KDDTrain+.txt
+│       ├── KDDTest+.txt
+├── models/                 # Trained models
+│   ├── preprocessor.pkl    # Preprocessing pipeline
+│   ├── xgb_model.pkl       # XGBoost model
+├── src/                    # Source code
+│   ├── __init__.py         # Package initialization
+│   ├── config.py           # Configuration settings
+│   ├── preprocess.py       # Data preprocessing
+│   ├── train_model.py      # Model training
+│   ├── zeek_feature_extractor.py  # Zeek log feature extraction
+│   ├── explain_model.py    # Model explanation (SHAP)
+│   ├── stream_monitor.py   # Real-time traffic monitoring
+├── logs/                   # Application logs (ignored in git)
+│   ├── app.log             # Log file
+├── venv/                   # Virtual environment
+├── requirements.txt        # Python dependencies
+├── main.py                 # Main execution script
+└── README.md               # Project documentation
 ```
 
 ---
