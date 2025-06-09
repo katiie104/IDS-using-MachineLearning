@@ -145,7 +145,7 @@ IDS-using-MachineLearning/
 ### 1. Train and Evaluate ML Models
 
 ```bash
-jupyter notebook IDS_ML.ipynb
+python main.py training
 ```
 
 Notebook includes:
@@ -169,7 +169,7 @@ Logs will be stored in: `/opt/zeek/logs/current/`
 ### 3. Process Zeek Logs
 
 ```bash
-python process_zeek_logs.py
+python zeek_feature_extractor.py
 ```
 
 Extracts and formats features like `duration`, `orig_bytes`, etc. to match NSL-KDD structure.
@@ -178,14 +178,14 @@ Extracts and formats features like `duration`, `orig_bytes`, etc. to match NSL-K
 
 ### 4. Run IDS Pipeline
 
-> ⚠️ A `run_ids.py` script (optional) should:
+> ⚠️ A `main.py` script (optional) should:
 
 * Load trained ML model
 * Process Zeek logs in real time
 * Classify traffic and send alerts to Elasticsearch
 
 ```bash
-python run_ids.py
+python main.py
 ```
 
 ---
