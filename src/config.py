@@ -2,7 +2,7 @@ import os
  
 # Đảm bảo BASE_DIR là thư mục gốc của project (IDS_ML)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
+ 
 # Model paths
 MODEL_PATHS = {
     'xgb': os.path.join(BASE_DIR, 'models', 'xgb_model.pkl'),
