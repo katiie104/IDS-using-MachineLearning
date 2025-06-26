@@ -1,10 +1,6 @@
 import logging
 import os
 import sys # Import sys để xử lý tham số dòng lệnh
-
-# Import các hàm chính từ các module đã sửa đổi
-# Chúng ta sẽ không cần import từng hàm con như clean_data, save_model...
-# vì chúng đã được tích hợp bên trong các pipeline
 from src.train_model import train_model as run_train_pipeline # Đổi tên để tránh trùng lặp
 from src.stream_monitor import monitor as run_monitor_pipeline # Đổi tên để tránh trùng lặp
 
@@ -61,8 +57,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
 
 
